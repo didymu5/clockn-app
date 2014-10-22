@@ -30,19 +30,19 @@
             <p>Enter Pin</p>
             <div id="keypad">
                 <div id="indicator-pin">
-                   <input type="text" name="pinname" id="indicator-input">
+                   <input type="password" name="pinname" id="indicator-input">
                 </div>
                 <ul id="keynumbers" class="clearfix">
-                    <li class="key"><button data-value="1">1</butotn></li>
-                    <li class="key"><button data-value="2">2</butotn></li>
-                    <li class="key"><button data-value="3">3</butotn></li>
-                    <li class="key"><button data-value="4">4</butotn></li>
-                    <li class="key"><button data-value="5">5</butotn></li>
-                    <li class="key"><button data-value="6">6</butotn></li>
-                    <li class="key"><button data-value="7">7</butotn></li>
-                    <li class="key"><button data-value="8">8</butotn></li>
-                    <li class="key"><button data-value="9">9</butotn></li>
-                    <li class="key"><button data-value="0">0</butotn></li>
+                    <li id="keybtn1" class="key"><button data-value="1">1</butotn></li>
+                    <li id="keybtn2" class="key"><button data-value="2">2</butotn></li>
+                    <li id="keybtn3" class="key"><button data-value="3">3</butotn></li>
+                    <li id="keybtn4" class="key"><button data-value="4">4</butotn></li>
+                    <li id="keybtn5" class="key"><button data-value="5">5</butotn></li>
+                    <li id="keybtn6" class="key"><button data-value="6">6</butotn></li>
+                    <li id="keybtn7" class="key"><button data-value="7">7</butotn></li>
+                    <li id="keybtn8" class="key"><button data-value="8">8</butotn></li>
+                    <li id="keybtn9" class="key"><button data-value="9">9</butotn></li>
+                    <li id="keybtn0" class="key"><button data-value="0">0</butotn></li>
                 </ul>
             </div>
             <button class="bigassbutton">Clock in</button>
@@ -62,27 +62,54 @@
                 var btnVal = $(e.target).attr('data-value');
                 if( count != limitkey ){
                     pincode.push(btnVal);
-                    $('#indicator-pin').append('*');
-                    
+                    $('#indicator-input').val(pincode.join(''));
+                    // $('#indicator-pin').append('*');
                     count++;
                 }
             });
+function toCharacter(keyCode){
+    var numPadToKeyPadDelta = 48;
+
+    // if a numeric key on the num pad was pressed.
+    if (keyCode >= 96 && keyCode <= 105) {
+    keyCode = keyCode - numPadToKeyPadDelta;
+    return String.fromCharCode(keyCode);
+    }
+};
+function submitPin () {
+    $.post('http://localhost:1337/checkin/', {pin: pincode.join('')})
+                    .done(function(chkIn){
+                        return 1;
+                    })
+                    .success(function(chkIn){
+                        console.log(chkIn.employee)
+                        $.get('http://localhost:1337/employee/', {id:chkIn.employee})
+                        .done(function(emp){
+                            $('#clockn-wrapper').html('Thank you '+ emp.fullName);
+                        })
+                        return true;
+                    })
+                    .fail(function(msg){
+                        console.log(msg, 'failed');
+                        return false;
+                    })
+}
+$(document).keydown(function (event) {
+    console.log(event.which)
+    var keyCode = event.which;
+    if(keyCode >=48 && keyCode<=57){
+        // pincode.push(String.fromCharCode(keyCode))
+        var datavalue = String.fromCharCode(keyCode);
+        $('[data-value='+datavalue+']').trigger('click');
+    };
+    if(keyCode === 13){
+        submitPin();
+    };
+      
+ });
             $('.bigassbutton').on('click', function(e){
                 if(count === limitkey){
-                    
-                    var request = $.ajax({
-                        url: 'http://localhost:1337/checkin',
-                        type: "POST",
-                        contentType: 'x-www-form-urlencoded',
-                        data: {pin: pincode.join('')},
-                        dataType:"JSON"
-                    });
-                    request.done(function(msg){
-                        console.log(msg)
-                    });
-                    request.fail(function(jqx, msg){
-                        console.log(msg)
-                    });
+                    submitPin();
                 };
 
             });
